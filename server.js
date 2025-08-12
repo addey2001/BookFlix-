@@ -8,6 +8,7 @@ import errorHandler from "./middleware/errorhandler.js";
 //routers
 import userRouter from "./controllers/users.js";
 import router from "./controllers/users.js";
+import verifyToken from "./middleware/verifyToken.js";
 
 
 const app = express();
@@ -19,6 +20,15 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 //routes
+
+//protected routes 
+app.get('/api/protected', verifyToken , (req, res, next) => {
+    console.log(req.user)
+    return res.json({ message: 'You have access to this protected route' });
+})
+
+
+
 app.use('/api/auth', userRouter);
 
 //error handlers

@@ -17,9 +17,9 @@ export class NotFound extends Error {
 }
 
 export class Unauthorized extends Error {
-    constructor(message = 'unauthorized') {
+    constructor(message) {
         super(message);
-        this.name = "Unauthorized";
+        this.name = "Unauthorized"; 
         this.status = 401; // Unauthorized
        
     }

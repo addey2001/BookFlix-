@@ -1,7 +1,7 @@
 import { NotFound } from "../utils/errors.js";
 
 
-const notFoundHandler = () => {
+const notFoundHandler = ( req, res, next) => {
     try {
         throw new NotFound('page not found'); 
     

@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/user.js";
 import { InvalidData, Unauthorized} from "../utils/errors.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -43,28 +44,50 @@ router.post('/sign-up', async (req, res, next) => {
     }
 })
 
-//sign-up
+//sign-in
 router.post('/sign-in', async (req, res, next) => {
+
+    const { identifier, password } = req.body;
     try {
         //search the user by  username and password
-const foundUser = await User.findOne({ username: req.body.username })
-console.log(foundUser)
-        if (!foundUser) 
-            throw new Unauthorized('user does not exist');
-        
-        //compare the hash against the password
+const foundUser = await User.findOne({ 
+    $or: [
+        { username: identifier },
+        { email: identifier }
+    ]
+})
 
+        if (!foundUser) {
+            throw new Unauthorized('User does not exist.');
+        }
+
+        //compare the hash against the password
+        if (!bcrypt.compareSync(password, foundUser.password)) {
+            throw new Unauthorized('Invalid password.');
+        }
+        
         //generate token 
+        const token = jwt.sign(
+            {
+                user: {
+                    _id: foundUser._id,
+                    username: foundUser.username,
+                    email: foundUser.email
+                }
+            },
+            process.env.TOKEN_SECRET,
+            { expiresIn: 10 }
+        );
+
 
         //send the response
-return res.status(201).json('User does not exist' );
+        return res.status(200).json({ token: token });
 
-        //searching user 
 
     } catch (error) {
         next(error);
     }
 })
-//sign-in
+
 
 export default router;
