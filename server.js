@@ -7,8 +7,8 @@ import notFoundHandler from "./middleware/NotFoundHandler.js";
 import errorHandler from "./middleware/errorhandler.js";
 //routers
 import userRouter from "./controllers/users.js";
-import router from "./controllers/users.js";
 import verifyToken from "./middleware/verifyToken.js";
+import booksRouter from "./controllers/books.js";
 
 
 const app = express();
@@ -27,9 +27,12 @@ app.get('/api/protected', verifyToken , (req, res, next) => {
     return res.json({ message: 'You have access to this protected route' });
 })
 
-
-
+// Authentication routes
 app.use('/api/auth', userRouter);
+
+
+// Books routes (protected)
+app.use('/api/books', verifyToken, booksRouter);
 
 //error handlers
 app.use(notFoundHandler);
