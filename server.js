@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import mongoose from "mongoose";
 import morgan from "morgan";
+import cors from 'cors';
 //middleware 
 import notFoundHandler from "./middleware/NotFoundHandler.js";
 import errorHandler from "./middleware/errorhandler.js";
@@ -11,11 +12,13 @@ import verifyToken from "./middleware/verifyToken.js";
 import booksRouter from "./controllers/books.js";
 
 
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 
 //middlewares
+app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
