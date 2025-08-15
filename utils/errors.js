@@ -8,6 +8,14 @@ export class InvalidData extends Error {
     }
 }
 
+export class Forbidden extends Error {
+    constructor(message = "you do not have permission to access this resource") {
+        super(message);
+        this.name = "Forbidden";
+        this.status = 403; // Forbidden
+    }
+}
+
 export class NotFound extends Error {
     constructor(message) {
         super(message);

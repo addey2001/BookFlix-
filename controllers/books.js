@@ -3,6 +3,9 @@ import Book from "../models/books.js";
 import verifyToken from "../middleware/verifyToken.js";
 import { isObjectIdOrHexString } from "mongoose";
 
+//custom errors
+import { NotFound, Forbidden } from "../utils/errors.js";
+
 const router = express.Router();
 
 const seriesRecommendations = {
@@ -54,10 +57,10 @@ const seriesRecommendations = {
     }
 }
 //controllers
-router.get('/recommendations/:recommendationName', verifyToken, (req, res) => { 
+router.get('/recommendations/:recommendationName', verifyToken, (req, res) => {
     const { recommendationName } = req.params;
     console.log(seriesRecommendations[recommendationName]);
-    
+
     if (seriesRecommendations[recommendationName]) {
         return res.json(seriesRecommendations[recommendationName]);
     } else {
@@ -86,83 +89,88 @@ router.get('', verifyToken, async (req, res, next) => {
     }
 });
 
-// Get user's personal books (reading history)
-router.get('/my-books', verifyToken, async (req, res, next) => {
-    try {
-        const userBooks = await Book.find({ user: req.user._id });
-        return res.json(userBooks);
-    } catch (error) {
-        next(error);
-    }
-});
 
 //show
 router.get('/:bookId', verifyToken, async (req, res, next) => {
     try {
 
         const { bookId } = req.params;
-        const showBook = await Book.findById(req.params.bookId);
+        const showBook = await Book.findById(bookId);
         if (!showBook) {
-            return res.status(404).json({ message: 'Book not found' });
+            throw new NotFound('Book not found');
         }
-        return res.json(showBook);   
+
+        return res.json(showBook);
     } catch (error) {
         next(error);
     }
 });
-
-//edit forms
-router.get('/:bookId/edit', verifyToken, async (req, res, next) => {
-    try {
-        const { bookId } = req.params;
-        const book = await Book.findById(bookId);
-        if (!book) {
-            return res.status(404).json({ message: 'Book not found' });
-        }
-        if (!book.user.equals(req.user._id)) { 
-            return res.status(403).json({ message: 'You do not have permission to edit this book' });
-        }
-        return res.json(book);
-    } catch (error) {
-        next(error);
-    }
-});
-
 
 
 // Update book
 router.put('/:bookId', verifyToken, async (req, res, next) => {
     try {
-        const book = await Book.findById(req.params.bookId);
-        if (!book) {
-            return res.status(404).json({ message: 'Book not found' });
+        const { bookId } = req.params;
+        const showBook = await Book.findById(bookId);
+        if (!showBook) {
+            throw new NotFound('Book not found');
         }
-        if (!book.user.equals(req.user._id)) {
-            return res.status(403).json({ message: 'You do not have permission to edit this book' });
-        }
+
+        if (!showBook.user.equals(req.user._id))
+            throw new Forbidden()
         const updatedBook = await Book.findByIdAndUpdate(
-            req.params.bookId, 
-            req.body, 
-            { new: true, runValidators: true }
+            bookId,
+            req.body, {
+            returnDocument: 'after',
+        }
         );
-        return res.json(updatedBook);   
+
+
+        return res.json(updatedBook);
     } catch (error) {
         next(error);
     }
-});
+}
+);
+//favorited 
+router.post('/:bookId/favorite', verifyToken, async (req, res, next) => {
+    try {
+        const { bookId } = req.params;
+        const showBook = await Book.findById(bookId);
+        if (!showBook) {
+            throw new NotFound('Book not found');
+        }
+        if (!showBook.user.equals(req.user._id))
+            throw new Forbidden()
+        console.log(showBook)
+        const updatedBook = await Book.findByIdAndUpdate(
+            bookId, 
+            { $push: { favoritedBy: req.user._id } },
+            { new: true }
+        );
+
+        return res.json( updatedBook);
+    }catch (error) {
+        next(error);
+    }
+}
+)
 
 // Delete book
 router.delete('/:bookId', verifyToken, async (req, res, next) => {
     try {
-        const book = await Book.findById(req.params.bookId);
-        if (!book) {
-            return res.status(404).json({ message: 'Book not found' });
+      const { bookId } = req.params;
+        const showBook = await Book.findById(bookId);
+        if (!showBook) {
+            throw new NotFound('Book not found');
         }
-        if (!book.user.equals(req.user._id)) {
-            return res.status(403).json({ message: 'You do not have permission to delete this book' });
-        }
-        await Book.findByIdAndDelete(req.params.bookId);
-        return res.json({ message: 'Book deleted successfully' });   
+      
+        if (!showBook.user.equals(req.user._id))
+            throw new Forbidden()
+
+        await Book.findByIdAndDelete(bookId);
+
+        return res.sendStatus(204)
     } catch (error) {
         next(error);
     }

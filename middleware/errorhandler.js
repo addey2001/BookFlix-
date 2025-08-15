@@ -15,7 +15,13 @@ const logError = (err) => {
 
 
 const errorHandler = (err, req, res, next) => {
-    logError(err)
+   logError(err)
+
+// 404 not found 
+if (err.name === 'NotFound') {
+        return res.status(404).json({ message: err.message })
+    }
+
 
     if (err.name === 'InvalidData') {
         return res.status(err.status).json(err.response)
@@ -36,10 +42,23 @@ const errorHandler = (err, req, res, next) => {
             [keyName]: `${keyValue[0].toUpperCase() + keyName.slice(1)} "${keyValue}" already exists`
         })
     }
+    //* forbidden
+    if (err.name === 'Forbidden') {
+        return res.status(403).json({ message: err.message })
+    }
+
 
     // unauthorized
     if (err.name === 'Unauthorized'|| err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
         return res.status(401).json({ message: err.message })
+    }
+
+    //invalid objectId/  404 Not Found
+    if (err.name === 'CastError' && err.kind === 'ObjectId') {
+    return res.status(404).json({
+            message: 'Resource not found'
+        })
+    
     }
 
     console.log(err)
